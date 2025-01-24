@@ -1,0 +1,94 @@
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific folders
+.vscode/
+.idea/
+.ionide/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.csproj.user
+*.userprefs
+
+# Build Folders
+bin/
+obj/
+out/
+Debug/
+Release/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.cache
+*.pdb
+*.mdb
+*.ilk
+*.idb
+*.opendb
+*.tlog
+*.vsp
+*.vspscc
+*.ncb
+*.aps
+*.sdf
+*.plist
+*.pgc
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# Entity Framework Core Migrations
+Migrations/
+
+# Generated files
+*.Generated.*
+*AssemblyInfo*.cs
+*.designer.cs
+*.g.cs
+*.g.i.cs
+*.csproj.FileListAbsolute.txt
+*.t4
+
+# Local configuration
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Staging.json
+appsettings.Test.json
+
+# MacOS-specific files
+.DS_Store
+*.dmg
+
+# Windows-specific files
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Linux-specific files
+*~
+
+# Docker files
+*.dockerignore
+docker-compose.override.yml
