@@ -4,7 +4,6 @@ namespace TicTacToeServer.Models
     {
         public static bool IsValidMove(GameRoom room, int row, int col, char player)
         {
-            if (room.Board[row][col] != ' ') Console.WriteLine($"Field at Row: {row}, Col: {col} is already occupied by {room.Board[row][col]}");
             if (room.CurrentTurn != player) return false;
             if (row < 0 || row > 2 || col < 0 || col > 2) return false;
             if (room.Board[row][col] != ' ') return false;
@@ -18,19 +17,21 @@ namespace TicTacToeServer.Models
             if (CheckWin(room.Board, player))
             {
                 room.IsGameOver = true;
+                room.Winner = player == 'X' ? room.PlayerXName : room.PlayerOName;
                 return;
             }
             
             if (IsBoardFull(room.Board))
             {
                 room.IsGameOver = true;
+                room.Winner = "Draw";
                 return;
             }
-            
             room.CurrentTurn = (player == 'X') ? 'O' : 'X';
         }
 
-        private static bool CheckWin(char[][] board, char player)
+
+        public static bool CheckWin(char[][] board, char player)
         {
             for (int i = 0; i < 3; i++)
             {
@@ -50,7 +51,7 @@ namespace TicTacToeServer.Models
             return false;
         }
 
-        private static bool IsBoardFull(char[][] board)
+        public static bool IsBoardFull(char[][] board)
         {
             for (int i = 0; i < 3; i++)
             {
