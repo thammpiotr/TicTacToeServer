@@ -22,7 +22,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
-          buildkit-inline-cache: true
+          install: true
 
       - name: Build Docker image
         run: |
