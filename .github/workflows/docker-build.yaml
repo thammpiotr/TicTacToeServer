@@ -26,7 +26,12 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker buildx build --platform=linux/amd64 -t my-net7-app --load .
+          docker buildx build \
+          --platform=linux/amd64 \
+          -t my-net7-app \
+          --file TicTacToeServer/Dockerfile \
+          --load \
+          TicTacToeServer
         # --platform=linux/amd64 => wymuszamy x86_64
         # --load => wczytujemy obraz do lokalnego rejestru Docker w GitHub Actions
 
