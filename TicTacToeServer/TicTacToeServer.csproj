@@ -16,4 +16,8 @@
       <Folder Include="Services\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include=".github\workflows\docker-build.yaml" />
+    </ItemGroup>
+
 </Project>
