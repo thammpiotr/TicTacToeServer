@@ -36,7 +36,7 @@ jobs:
           docker buildx build \
             --platform=linux/amd64 \
             --file TicTacToeServer/Dockerfile \
-            -t YOUR_DOCKERHUB_USERNAME/tictactoe-server:latest \
+            -t pthamm/tictactoe-server:latest \
             --push \
             TicTacToeServer
           # ↑ Parametr --push oznacza, że buildx automatycznie wyśle obraz do DockerHub
