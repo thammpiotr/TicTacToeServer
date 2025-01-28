@@ -3,8 +3,8 @@ namespace TicTacToeServer.Models
     public class GameRoom
     {
         public string RoomId { get; set; }
-        public string PlayerXName { get; set; }
-        public string PlayerOName { get; set; }
+        public string? PlayerXName { get; set; }
+        public string? PlayerOName { get; set; }
         public string? PlayerXId { get; set; }
         public string? PlayerOId { get; set; }
         public string? PlayerXConnectionId { get; set; }

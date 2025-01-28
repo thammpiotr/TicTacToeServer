@@ -96,6 +96,9 @@ public async Task<bool> JoinRoom(string roomId, string playerName, string player
 
         if (isGameOver)
         {
+            ResetGameState(room);
+            await Clients.Group(roomId).SendAsync("GameRestarted", room.Board, room.CurrentTurn);
+
             await Clients.Caller.SendAsync(
                 "SyncGameState",
                 room.Board,
@@ -288,63 +291,22 @@ public async Task<bool> LeaveRoom()
     _connectionToRoom.Remove(connectionId);
     await Groups.RemoveFromGroupAsync(connectionId, roomId);
 
-    if (_rooms.TryGetValue(roomId, out var room))
+    if (!_rooms.TryGetValue(roomId, out var room))
     {
-
-        if (room.IsGameOver)
-        {
-            if (room.PlayerXConnectionId == connectionId)
-            {
-                room.PlayerXConnectionId = null;
-                room.PlayerXName = null;
-  
-                room.PlayerXId = null;
-            }
-            else if (room.PlayerOConnectionId == connectionId)
-            {
-                room.PlayerOConnectionId = null;
-                room.PlayerOName = null;
+        return true;
+    }
     
-                room.PlayerOId = null;
-            }
-            
-            if (room.PlayerXConnectionId == null && room.PlayerOConnectionId == null)
-            {
-                _rooms.Remove(roomId);
-                await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
-            }
-            else
-            {
-                await Clients.Group(roomId).SendAsync("PlayerLeft", connectionId);
-                await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
-            }
-            return true;
-        }
-        string? winner = null;
+    if (room.IsGameOver)
+    {
         if (room.PlayerXConnectionId == connectionId)
         {
             room.PlayerXConnectionId = null;
             room.PlayerXName = null;
-            if (room.PlayerOConnectionId != null)
-            {
-                winner = room.PlayerOName;
-            }
         }
         else if (room.PlayerOConnectionId == connectionId)
         {
             room.PlayerOConnectionId = null;
             room.PlayerOName = null;
-            if (room.PlayerXConnectionId != null)
-            {
-                winner = room.PlayerXName; 
-            }
-        }
-
-        if (winner != null)
-        {
-            room.IsGameOver = true;
-            room.Winner = winner; 
-            await Clients.Group(roomId).SendAsync("GameOver", winner);
         }
         
         if (room.PlayerXConnectionId == null && room.PlayerOConnectionId == null)
@@ -357,10 +319,54 @@ public async Task<bool> LeaveRoom()
             await Clients.Group(roomId).SendAsync("PlayerLeft", connectionId);
             await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
         }
+        return true;
+    }
+    
+    string? winner = null;
+
+    if (room.PlayerXConnectionId == connectionId)
+    {
+        room.PlayerXConnectionId = null;
+        room.PlayerXName = null;
+        
+        if (room.PlayerOConnectionId != null)
+        {
+            winner = room.PlayerOName;
+        }
+    }
+    else if (room.PlayerOConnectionId == connectionId)
+    {
+        room.PlayerOConnectionId = null;
+        room.PlayerOName = null;
+        
+        if (room.PlayerXConnectionId != null)
+        {
+            winner = room.PlayerXName; 
+        }
+    }
+
+    if (winner != null)
+    {
+        room.IsGameOver = true;
+        room.Winner = winner;
+        
+        await Clients.Group(roomId).SendAsync("GameOver", winner);
+    }
+    
+    if (room.PlayerXConnectionId == null && room.PlayerOConnectionId == null)
+    {
+        _rooms.Remove(roomId);
+        await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
+    }
+    else
+    {
+        await Clients.Group(roomId).SendAsync("PlayerLeft", connectionId);
+        await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
     }
 
     return true;
 }
+
 
 
 
