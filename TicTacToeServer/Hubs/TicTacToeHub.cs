@@ -50,54 +50,110 @@ namespace TicTacToeServer.Hubs
         }
 
                 
-public async Task<bool> JoinRoom(string roomId, string playerName, string playerId)
-{
-    var connectionId = Context.ConnectionId;
-
-    if (!_rooms.TryGetValue(roomId, out var room))
-    {
-
-        return false;
-    }
-    
-    if (room.PlayerXConnectionId != null && room.PlayerOConnectionId != null &&
-        room.PlayerXId != playerId && room.PlayerOId != playerId)
-    {
-        return false;
-    }
-
-
-    bool isPlayerX = (room.PlayerXId == playerId);
-    bool isPlayerO = (room.PlayerOId == playerId);
-    bool isGameOver = room.IsGameOver;
-
-
-    if (isPlayerX || isPlayerO)
-    {
-        room.IsPendingRemoval = false;
-
-
-        if (isPlayerX)
+        public async Task<bool> JoinRoom(string roomId, string playerName, string playerId)
         {
-            room.PlayerXPendingRemoval = false;
-            room.PlayerXConnectionId = connectionId;
-            room.PlayerXName = playerName;
-        }
-        else
-        {
-            room.PlayerOPendingRemoval = false;
-            room.PlayerOConnectionId = connectionId;
-            room.PlayerOName = playerName;
-        }
+            var connectionId = Context.ConnectionId;
 
-        _connectionToRoom[connectionId] = roomId;
-        await Groups.AddToGroupAsync(connectionId, roomId);
+            if (!_rooms.TryGetValue(roomId, out var room))
+            {
+
+                return false;
+            }
+            
+            if (room.PlayerXConnectionId != null && room.PlayerOConnectionId != null &&
+                room.PlayerXId != playerId && room.PlayerOId != playerId)
+            {
+                return false;
+            }
 
 
-        if (isGameOver)
-        {
-            ResetGameState(room);
-            await Clients.Group(roomId).SendAsync("GameRestarted", room.Board, room.CurrentTurn);
+            bool isPlayerX = (room.PlayerXId == playerId);
+            bool isPlayerO = (room.PlayerOId == playerId);
+            bool isGameOver = room.IsGameOver;
+
+
+            if (isPlayerX || isPlayerO)
+            {
+                room.IsPendingRemoval = false;
+
+
+                if (isPlayerX)
+                {
+                    room.PlayerXPendingRemoval = false;
+                    room.PlayerXConnectionId = connectionId;
+                    room.PlayerXName = playerName;
+                }
+                else
+                {
+                    room.PlayerOPendingRemoval = false;
+                    room.PlayerOConnectionId = connectionId;
+                    room.PlayerOName = playerName;
+                }
+
+                _connectionToRoom[connectionId] = roomId;
+                await Groups.AddToGroupAsync(connectionId, roomId);
+
+
+                if (isGameOver)
+                {
+                    ResetGameState(room);
+                    await Clients.Group(roomId).SendAsync("GameRestarted", room.Board, room.CurrentTurn);
+
+                    await Clients.Caller.SendAsync(
+                        "SyncGameState",
+                        room.Board,
+                        room.CurrentTurn,
+                        room.IsGameOver,
+                        room.Winner ?? string.Empty
+                    );
+                    return true; 
+                }
+
+
+                await Clients.Caller.SendAsync(
+                    "SyncGameState",
+                    room.Board,
+                    room.CurrentTurn,
+                    room.IsGameOver,
+                    room.Winner ?? string.Empty
+                );
+                return true;
+            }
+
+
+            if (!isGameOver && room.IsPendingRemoval)
+            {
+                return false;
+            }
+
+
+            if (isGameOver)
+            {
+                ResetGameState(room);
+                await Clients.Group(roomId).SendAsync("GameRestarted", room.Board, room.CurrentTurn);
+            }
+
+
+            if (room.PlayerXConnectionId == null)
+            {
+                room.PlayerXConnectionId = connectionId;
+                room.PlayerXId = playerId;
+                room.PlayerXName = playerName;
+            }
+            else if (room.PlayerOConnectionId == null)
+            {
+                room.PlayerOConnectionId = connectionId;
+                room.PlayerOId = playerId;
+                room.PlayerOName = playerName;
+            }
+            else
+            {
+                return false;
+            }
+
+            _connectionToRoom[connectionId] = roomId;
+            await Groups.AddToGroupAsync(connectionId, roomId);
+
 
             await Clients.Caller.SendAsync(
                 "SyncGameState",
@@ -106,83 +162,27 @@ public async Task<bool> JoinRoom(string roomId, string playerName, string player
                 room.IsGameOver,
                 room.Winner ?? string.Empty
             );
-            return true; 
+            await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
+
+            return true;
         }
 
 
-        await Clients.Caller.SendAsync(
-            "SyncGameState",
-            room.Board,
-            room.CurrentTurn,
-            room.IsGameOver,
-            room.Winner ?? string.Empty
-        );
-        return true;
-    }
 
 
-    if (!isGameOver && room.IsPendingRemoval)
-    {
-        return false;
-    }
+        private void ResetGameState(GameRoom room)
+        {
 
-
-    if (isGameOver)
-    {
-        ResetGameState(room);
-        await Clients.Group(roomId).SendAsync("GameRestarted", room.Board, room.CurrentTurn);
-    }
-
-
-    if (room.PlayerXConnectionId == null)
-    {
-        room.PlayerXConnectionId = connectionId;
-        room.PlayerXId = playerId;
-        room.PlayerXName = playerName;
-    }
-    else if (room.PlayerOConnectionId == null)
-    {
-        room.PlayerOConnectionId = connectionId;
-        room.PlayerOId = playerId;
-        room.PlayerOName = playerName;
-    }
-    else
-    {
-        return false;
-    }
-
-    _connectionToRoom[connectionId] = roomId;
-    await Groups.AddToGroupAsync(connectionId, roomId);
-
-
-    await Clients.Caller.SendAsync(
-        "SyncGameState",
-        room.Board,
-        room.CurrentTurn,
-        room.IsGameOver,
-        room.Winner ?? string.Empty
-    );
-    await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
-
-    return true;
-}
-
-
-
-
-private void ResetGameState(GameRoom room)
-{
-
-    room.Board = new []
-    {
-        new [] { ' ', ' ', ' ' },
-        new [] { ' ', ' ', ' ' },
-        new [] { ' ', ' ', ' ' }
-    };
-    room.CurrentTurn = 'X';
-    room.IsGameOver = false;
-    room.Winner = null;
-}
+            room.Board = new []
+            {
+                new [] { ' ', ' ', ' ' },
+                new [] { ' ', ' ', ' ' },
+                new [] { ' ', ' ', ' ' }
+            };
+            room.CurrentTurn = 'X';
+            room.IsGameOver = false;
+            room.Winner = null;
+        }
 
 
         
@@ -367,9 +367,7 @@ private void ResetGameState(GameRoom room)
 
             return true;
         }
-
-
-
+        
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
@@ -379,6 +377,7 @@ private void ResetGameState(GameRoom room)
             {
                 if (_rooms.TryGetValue(roomId, out var room))
                 {
+                    bool playerWasRemoved = false;
                     if (room.PlayerXConnectionId == connectionId)
                     {
                         room.PlayerXPendingRemoval = true;
@@ -400,6 +399,7 @@ private void ResetGameState(GameRoom room)
                             room.PlayerXName = null;
                             room.PlayerXId = null;
                             room.PlayerXPendingRemoval = false; 
+                            playerWasRemoved = true;
                         }
                         if (room.PlayerOPendingRemoval)
                         {
@@ -407,6 +407,7 @@ private void ResetGameState(GameRoom room)
                             room.PlayerOName = null;
                             room.PlayerOId = null;
                             room.PlayerOPendingRemoval = false;
+                            playerWasRemoved = true;
                         }
                         
                         if (!room.IsGameOver)
@@ -432,12 +433,15 @@ private void ResetGameState(GameRoom room)
                         if (room.PlayerXConnectionId == null && room.PlayerOConnectionId == null)
                         {
                             _rooms.Remove(roomId);
-                            _connectionToRoom.Remove(connectionId);
                             await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
                         }
                         else
                         {
                             await Clients.All.SendAsync("RoomsUpdated", await GetRoomsWithPlayerCounts());
+                        }
+                        if (playerWasRemoved )
+                        {
+                            await Clients.Client(connectionId).SendAsync("RemoveRoomId");
                         }
                     }
                 }
