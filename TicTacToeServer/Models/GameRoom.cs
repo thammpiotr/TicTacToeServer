@@ -12,19 +12,19 @@ namespace TicTacToeServer.Models
         public char[][] Board { get; set; }
         public char CurrentTurn { get; set; }
         public bool IsGameOver { get; set; }
-        public bool IsPendingRemoval { get; set; } = false;
+        public bool IsPendingRemoval { get; set; }
         public string? Winner { get; set; }
-        public bool PlayerXPendingRemoval { get; set; } = false;
-        public bool PlayerOPendingRemoval { get; set; } = false;
+        public bool PlayerXPendingRemoval { get; set; }
+        public bool PlayerOPendingRemoval { get; set; }
         public HashSet<string> PlayersHistory { get; set; } = new HashSet<string>();
         public GameRoom(string roomId)
         {
             RoomId = roomId;
-            Board = new char[3][]
+            Board = new []
             {
-                new char[3] { ' ', ' ', ' ' },
-                new char[3] { ' ', ' ', ' ' },
-                new char[3] { ' ', ' ', ' ' }
+                new [] { ' ', ' ', ' ' },
+                new [] { ' ', ' ', ' ' },
+                new [] { ' ', ' ', ' ' }
             };
             CurrentTurn = 'X';
             IsGameOver = false;
